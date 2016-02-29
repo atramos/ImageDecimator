@@ -119,11 +119,12 @@ public class AppUI implements IAppUI {
 	}
 
 	@Override
-	public void setWorkingImages(List<File> images) throws IOException {
+	public void setWorkingImages(List<File> images,AcceptOrReject aor) throws IOException {
 		int size = 4;
 		// imagePanel.repaint();
 		// imagePanel.removeAll();
-		imagePanel.populate(images, size);
+
+		imagePanel.populate(images, size,aor);
 		imagePanel.requestFocusInWindow();
 		frame.pack();
 

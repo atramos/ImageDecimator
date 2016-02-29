@@ -4,15 +4,18 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import javax.imageio.ImageIO;
 
 import org.imageviewer.api.IAppServices;
 
@@ -66,10 +69,10 @@ public class AcceptOrReject implements IAppServices {
 				d_path = Paths.get(dPathString);
 				try {
 
+					
 					Files.move(s_path, d_path, StandardCopyOption.REPLACE_EXISTING);
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
 				}
 
 			} else {
@@ -109,7 +112,7 @@ public class AcceptOrReject implements IAppServices {
 		}
 		imageLeft = imageLeft - ImageSets[nextsetofimage].size();
 
-		// ui.setStatus(String.format("Images %d Left.", imageLeft));
+		ui.setStatus(String.format(">> %d Images Left.", imageLeft));
 	}
 
 	public boolean isSetAvailable() {
@@ -122,8 +125,15 @@ public class AcceptOrReject implements IAppServices {
 	public void onOpen(File dir) {
 		// String[] names;
 		aor = this;
-		File files[] = dir.listFiles(file -> file.getName().matches("(?i).*\\.(jpg|jpeg|png|gif|tif|tiff)$"));
+		
 
+		
+		File files[] = dir.listFiles(file -> file.getName().matches("(?i).*\\.(arw|bmp|gif|j2c|j2k|jff|jp2|jpe|jpeg|jpg|jpx|png|pnm|raw|tif|tiff|wbmp)$"));
+
+		
+		
+		
+		
 		File accept = new File(dir.getPath() + "\\accept");
 		File reject = new File(dir.getPath() + "\\reject");
 		if (!accept.exists())
@@ -134,10 +144,36 @@ public class AcceptOrReject implements IAppServices {
 		Map<String, File> hm = new TreeMap<String, File>();
 		Lfiles = new ArrayList<File>();
 		Duplicatefiles = new ArrayList<File>();
-
+		int flag=0;
+		long waiting=0;
 		String UniqueString;
 		for (int i = 0; i < files.length; i++) {
+
 			UniqueString = files[i].getName().substring(0, files[i].getName().lastIndexOf('.'));
+			String ext = files[i].getName().substring(files[i].getName().lastIndexOf('.')+1);
+			List<String> inputFormats = Arrays.asList(ImageIO.getReaderFormatNames());
+			
+			
+			if(!inputFormats.contains(ext))
+			{
+				StringBuilder path=new StringBuilder(files[i].getPath());
+				String[] cmd = {"cmd.exe","/c","z:\\usr\\exiftool9.75 "+ files[i].getPath()+" -previewimage -b > "+ 
+						files[i].getPath().replace("."+ext,".jpeg")};
+				waiting+=files[i].getTotalSpace();				
+				try {
+					Runtime.getRuntime().exec(cmd);
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
+
+				Duplicatefiles.add(files[i]);
+				
+				files[i]= new File(files[i].getPath().replace("."+ext,".jpeg"));
+				
+			}
+				
 			if (hm.get(UniqueString) == null) {
 				hm.put(UniqueString, files[i]);
 				Lfiles.add(files[i]);
@@ -151,7 +187,14 @@ public class AcceptOrReject implements IAppServices {
 
 			}
 		}
-
+		
+		try {
+			Thread.sleep(waiting/1459763500);		// waiting time for raw image processing
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 		imageLeft = Lfiles.size();
 
 		if (Lfiles.size() % 4 == 0) {
@@ -186,6 +229,7 @@ public class AcceptOrReject implements IAppServices {
 				if (aor.isSetAvailable() && (e.getKeyCode() - 49) < aor.ImageSets[aor.nextsetofimage].size()
 						&& (e.getKeyCode() - 49) >= 0) {
 					aor.acceptInCurrentImageSet(e.getKeyCode() - 49);
+					ui.imagePanel.removeTopBottom();
 					ui.imagePanel.removeAll();
 					ui.imagePanel.repaint();
 					workingImages();
@@ -207,15 +251,20 @@ public class AcceptOrReject implements IAppServices {
 		aor.nextsetofimage++;
 
 		if (nextsetofimage <= ImageSets.length - 1) {
-			ui.setStatus(String.format("%d Images Left.", imageLeft));
+			ui.setStatus(String.format(">> %d Images Left.", imageLeft));
 
 			try {
-				ui.setWorkingImages(ImageSets[nextsetofimage]);
+				ui.setWorkingImages(ImageSets[nextsetofimage],aor);
 			} catch (IOException e) {
 				ui.setStatus("ERROR: " + e.toString());
 			}
 
 		}
+	}
+	
+	public void addDuplicate(File f)
+	{
+		Duplicatefiles.add(f);
 	}
 
 }
