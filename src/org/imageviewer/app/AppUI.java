@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -108,6 +109,7 @@ public class AppUI implements IAppUI {
 		// System.out.println(fc.getApproveButtonText());
 		fc.setApproveButtonToolTipText("Open images in this folder");
 		int returnVal = fc.showSaveDialog(this.frame);
+
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
 			services.onOpen(fc.getSelectedFile());
 		}
@@ -119,12 +121,12 @@ public class AppUI implements IAppUI {
 	}
 
 	@Override
-	public void setWorkingImages(List<File> images,AcceptOrReject aor) throws IOException {
+	public void setWorkingImages(List<File> images, AcceptOrReject aor) throws IOException {
 		int size = 4;
 		// imagePanel.repaint();
 		// imagePanel.removeAll();
 
-		imagePanel.populate(images, size,aor);
+		imagePanel.populate(images, size, aor);
 		imagePanel.requestFocusInWindow();
 		frame.pack();
 
